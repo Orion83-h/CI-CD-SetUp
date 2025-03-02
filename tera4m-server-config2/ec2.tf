@@ -1,10 +1,18 @@
+# Create Instance Profile for Jenkins EC2 Instance
+resource "aws_iam_instance_profile" "jenkins_s3_profile" {
+  name = "JenkinsS3Profile"
+  role = aws_iam_role.jenkins_s3_role.name
+}
+
+# Attach IAM Role to the Jenkins EC2 Instance
 resource "aws_instance" "virtual_server" {
-  ami               = data.aws_ami.ami-data.id
-  instance_type     = var.instance_type
-  security_groups   = [aws_security_group.demo.id]
-  subnet_id         = var.subnet_id
-  availability_zone = var.aws_az
-  key_name          = var.key_name
+  ami                  = data.aws_ami.ami-data.id
+  instance_type        = var.instance_type
+  security_groups      = [aws_security_group.demo.id]
+  subnet_id            = var.subnet_id
+  availability_zone    = var.aws_az
+  key_name             = var.key_name
+  iam_instance_profile = aws_iam_instance_profile.jenkins_s3_profile.name
 
   root_block_device {
     volume_size = var.volume_size
@@ -45,6 +53,13 @@ resource "aws_instance" "virtual_server" {
       # Install Gitleaks
       "sudo apt install gitleaks -y",
 
+      # Install AWS CLI
+      # Ref: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+      "sudo apt install unzip -y",
+      "curl 'https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip' -o 'awscliv2.zip'",
+      "unzip awscliv2.zip",
+      "sudo ./aws/install",
+
       # Install Minikube
       # Ref: https://minikube.sigs.k8s.io/docs/start/
       "curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64",
@@ -73,6 +88,24 @@ resource "aws_instance" "virtual_server" {
       "alias k=kubectl",
       "k version --client",
 
+      # Install Argo CD
+      # install ArgoCD CLI
+      "k create namespace argocd",
+      "k apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml",
+      "k rollout status deployment/argocd-server -n argocd --timeout=120s",
+      "k get services -n argocd",
+      "nohup k port-forward svc/argocd-server -n argocd --address 0.0.0.0 8080:443 > /dev/null 2>&1 &",
+      "argocd_password=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath=\"{.data.password}\" | base64 -d)",
+      "ip=$(curl -s ifconfig.me)",
+      "sudo curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64",
+      "sudo chmod +x /usr/local/bin/argocd",
+
+      # Install ArgoCD Image Updater
+      # Ref: https://github.com/argoproj/argo-cd-image-updater
+      "sudo curl -sSL -o /usr/local/bin/argocd-image-updater https://github.com/argoproj-labs/argocd-image-updater/releases/download/v0.15.2/argocd-image-updater-linux_amd64",
+      "sudo chmod +x /usr/local/bin/argocd-image-updater",
+      "sudo argocd-image-updater version",
+
       # Install Java 17
       # Ref: https://www.rosehosting.com/blog/how-to-install-java-17-lts-on-ubuntu-20-04/
       "sudo apt update -y",
@@ -88,8 +121,8 @@ resource "aws_instance" "virtual_server" {
       "sudo systemctl start jenkins",
       "sudo systemctl enable jenkins",
 
-      # Chqnge Jenkins default port to 8081 
-      "sudo sed -i -e 's/Environment=\"JENKINS_PORT=[0-9]\\+\"/Environment=\"JENKINS_PORT=8081\"/' /usr/lib/systemd/system/jenkins.service",
+      # Chqnge Jenkins default port to 8082 
+      "sudo sed -i -e 's/Environment=\"JENKINS_PORT=[0-9]\\+\"/Environment=\"JENKINS_PORT=8082\"/' /usr/lib/systemd/system/jenkins.service",
       "sudo sed -i -e 's/^\\s*#\\s*AmbientCapabilities=CAP_NET_BIND_SERVICE/AmbientCapabilities=CAP_NET_BIND_SERVICE/' /usr/lib/systemd/system/jenkins.service",
       "sudo systemctl daemon-reload",
       "sudo systemctl restart jenkins",
@@ -100,8 +133,9 @@ resource "aws_instance" "virtual_server" {
       "pass=$(sudo cat /var/lib/jenkins/secrets/initialAdminPassword)",
 
       # Output
-      "echo \"Access Jenkins Server here --> http://$ip:8081\"",
+      "echo \"Access Jenkins Server here --> http://$ip:8082\"",
       "echo \"Jenkins Initial Password: $pass\"",
+      "echo \"ArgoCD Password: $argocd_password\"",
     ]
   }
 }
