@@ -11,3 +11,7 @@ output "jenkins_url" {
 output "ssh-access" {
   value = aws_instance.virtual_server.public_ip != "" ? "ubuntu@${aws_instance.virtual_server.public_ip}" : "No public IP assigned to this instance."
 }
+
+output "bucket_name" {
+  value = aws_s3_bucket.trivy_reports.bucket
+}
