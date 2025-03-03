@@ -14,7 +14,7 @@ resource "aws_iam_role" "jenkins_s3_role" {
   })
 }
 
-# Attach S3 Permissions to the IAM Role
+# Create Permissions/Policy for the IAM Role
 resource "aws_iam_policy" "jenkins_s3_policy" {
   name        = "JenkinsS3Policy"
   description = "Allows Jenkins to upload Trivy reports to S3"
@@ -26,13 +26,10 @@ resource "aws_iam_policy" "jenkins_s3_policy" {
         Effect = "Allow"
         Action = [
           "s3:PutObject",
-          "s3:PutObjectTagging",
-          "s3:GetObject",
-          "s3:ListBucket"
+          "s3:PutObjectTagging"
         ]
         Resource = [
-          "arn:aws:s3:::trivy-reports-*",
-          "arn:aws:s3:::trivy-reports-*/*"
+          "arn:aws:s3:::trivy-reports-${random_string.bucket_suffix.result}/*"
         ]
       }
     ]
