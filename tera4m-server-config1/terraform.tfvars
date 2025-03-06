@@ -1,18 +1,20 @@
 key_name = "clusterKey"
 
-vpc_id = "vpc-0614e4b8004e483ef"
+vpc_id = "vpc-0427896a9a9dba438"
 
-subnet_id = "subnet-01a0dff5301c39dad"
+subnet_id = "subnet-08b87227d8525f11b"
 
 aws_az = "us-east-1a"
 
 region = "us-east-1"
 
-ingress_rule = [22, 8080, 8081, 9000, 50000]
+ingress_rule = [22, 465, 8080, 8081, 8082, 50000]
 
 sec_grp_name = "Virtual_Servers-SG"
 
-volume_size = "30"
+volume_size = "40"
+
+bucket_tag = "TrivyReports"
 
 private_key_path = "C:/path/to/key/file"
 

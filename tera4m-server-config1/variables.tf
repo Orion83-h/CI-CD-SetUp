@@ -6,15 +6,15 @@ variable "instances" {
   }))
 
   default = {
-    "jenkins" = {
+    "Jenkins" = {
       instance_type = "t2.medium"
       name_tag      = "Jenkins Server"
     },
-    "sonarqube" = {
+    "Nexus" = {
       instance_type = "t2.medium"
-      name_tag      = "SonarQube Server"
+      name_tag      = "Nexus Server"
     },
-    "minikube" = {
+    "Minikube" = {
       instance_type = "t3.medium"
       name_tag      = "Minikube Server"
     }
@@ -23,11 +23,11 @@ variable "instances" {
 
 # Variable for provisioning scripts
 variable "provisioning_scripts" {
-  description = "Commands to provision Jenkins, SonarQube, and Minikube"
+  description = "Commands to provision Jenkins, Nexus, and Minikube"
   type        = map(list(string))
 
   default = {
-    "jenkins" = [
+    "Jenkins" = [
       # Install Docker
       # Ref: https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository
       "sudo apt-get update -y",
@@ -82,15 +82,15 @@ variable "provisioning_scripts" {
       "sudo systemctl start jenkins",
       "sudo systemctl enable jenkins",
 
-      # Change Jenkins default port to 8081 
-      "sudo sed -i -e 's/Environment=\"JENKINS_PORT=[0-9]\\+\"/Environment=\"JENKINS_PORT=8081\"/' /usr/lib/systemd/system/jenkins.service",
+      # Change Jenkins default port to 8082 
+      "sudo sed -i -e 's/Environment=\"JENKINS_PORT=[0-9]\\+\"/Environment=\"JENKINS_PORT=8082\"/' /usr/lib/systemd/system/jenkins.service",
       "sudo sed -i -e 's/^\\s*#\\s*AmbientCapabilities=CAP_NET_BIND_SERVICE/AmbientCapabilities=CAP_NET_BIND_SERVICE/' /usr/lib/systemd/system/jenkins.service",
       "sudo systemctl daemon-reload",
       "sudo systemctl restart jenkins",
       "sudo lsof -i -n -P | grep jenkins",
     ]
 
-    "sonarqube" = [
+    "Nexus" = [
       # Install Docker
       # Ref: https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository
       "sudo apt-get update -y",
@@ -108,11 +108,11 @@ variable "provisioning_scripts" {
       "sudo chmod 777 /var/run/docker.sock",
       "docker --version",
 
-      # Install SonarQube (as a container)
-      "docker run -d --name sonar -p 9000:9000 sonarqube:lts-community",
+      # Install Nexus (as a container)
+      "docker run -d --name nexus -p 8081:8081 sonatype/nexus3",
     ]
 
-    "minikube" = [
+    "Minikube" = [
       # Install Docker
       # Ref: https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository
       "sudo apt-get update -y",
@@ -158,11 +158,22 @@ variable "provisioning_scripts" {
       "sudo mv linux-amd64/helm /usr/local/bin/helm",
       "helm version",
 
-      # install ArgoCD CLI
-      # Ref: https://argo-cd.readthedocs.io/en/stable/cli_installation/
-      # ArgoCD Listens On Port 8080
-      "k create ns argocd",
-      "k apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v2.5.8/manifests/install.yaml"
+      # Install ArgoCD & ArgoCD CLI
+      "k create namespace argocd",
+      "k apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml",
+      "k rollout status deployment/argocd-server -n argocd --timeout=120s",
+      "k get services -n argocd",
+      "nohup k port-forward svc/argocd-server -n argocd --address 0.0.0.0 8080:443 > /dev/null 2>&1 &",
+      "argocd_password=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath=\"{.data.password}\" | base64 -d)",
+      "ip=$(curl -s ifconfig.me)",
+      "sudo curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64",
+      "sudo chmod +x /usr/local/bin/argocd",
+
+      # Install ArgoCD Image Updater
+      # Ref: https://github.com/argoproj/argo-cd-image-updater
+      "sudo curl -sSL -o /usr/local/bin/argocd-image-updater https://github.com/argoproj-labs/argocd-image-updater/releases/download/v0.15.2/argocd-image-updater-linux_amd64",
+      "sudo chmod +x /usr/local/bin/argocd-image-updater",
+      "sudo argocd-image-updater version",
     ]
   }
 }
@@ -172,20 +183,47 @@ variable "private_key_path" {
   type        = string
 }
 
-variable "my_ip_address" {}
+variable "key_name" {
+  description = "Name of the SSH key pair"
+  type        = string
+}
 
-variable "key_name" {}
+variable "subnet_id" {
+  description = "ID of the subnet"
+  type        = string
+}
 
-variable "subnet_id" {}
+variable "aws_az" {
+  description = "AWS availability zone"
+  type        = string
+}
 
-variable "aws_az" {}
+variable "ingress_rule" {
+  description = "Ingress rules for the security group"
+  type        = list(number)
+}
 
-variable "ingress_rule" {}
+variable "sec_grp_name" {
+  description = "Name of the security group"
+  type        = string
+}
 
-variable "sec_grp_name" {}
+variable "vpc_id" {
+  description = "ID of the VPC"
+  type        = string
+}
 
-variable "vpc_id" {}
+variable "region" {
+  description = "AWS region"
+  type        = string
+}
 
-variable "region" {}
+variable "volume_size" {
+  description = "Size of the root volume"
+  type        = string
+}
 
-variable "volume_size" {}
+variable "bucket_tag" {
+  description = "Name of the S3 bucket tag"
+  type        = string
+}
