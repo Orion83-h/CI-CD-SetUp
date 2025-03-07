@@ -47,6 +47,13 @@ variable "provisioning_scripts" {
 
       # Install Gitleaks
       "sudo apt install gitleaks -y",
+      
+      # Install AWS CLI
+      # Ref: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+      "sudo apt install unzip -y",
+      "curl 'https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip' -o 'awscliv2.zip'",
+      "unzip awscliv2.zip",
+      "sudo ./aws/install",
 
       # Install Trivy
       # Ref: https://aquasecurity.github.io/trivy/v0.18.3/installation/
