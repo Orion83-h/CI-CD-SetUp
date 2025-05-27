@@ -13,7 +13,7 @@ resource "aws_security_group" "demo" {
       from_port   = port.value
       to_port     = port.value
       protocol    = "tcp"
-      cidr_blocks = var.my_ip_address
+      cidr_blocks = var.my_ip
     }
   }
 

@@ -47,7 +47,11 @@ variable "provisioning_scripts" {
 
       # Install Gitleaks
       "sudo apt install gitleaks -y",
-      
+
+      # Install jq
+      "sudo apt update",
+      "sudo apt install jq -y",
+
       # Install AWS CLI
       # Ref: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
       "sudo apt install unzip -y",
@@ -232,5 +236,10 @@ variable "volume_size" {
 
 variable "bucket_tag" {
   description = "Name of the S3 bucket tag"
+  type        = string
+}
+
+variable "my_ip" {
+  description = "Local IP Address"
   type        = string
 }

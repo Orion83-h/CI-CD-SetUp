@@ -18,4 +18,4 @@ bucket_tag = "TrivyReports"
 
 private_key_path = "C:/path/to/key/file"
 
-my_ip_address = ["154.72.150.101/32"]
+my_ip = ["154.72.150.101/32"]
