@@ -18,6 +18,8 @@ variable "vpc_id" {}
 
 variable "volume_size" {}
 
+variable "bucket_tag" {}
+
 # variable "my_ip_address" {}
 
 variable "private_key_path" {

@@ -18,6 +18,8 @@ vpc_id = "vpc-031c58f78e543401f"
 
 volume_size = 30
 
+bucket_tag = "jenkins-terraform-bucket"
+
 private_key_path = "C:/path/to/key/file"
 
 # my_ip_address = ["154.72.167.34/32"] // [curl ifconfig.me] command to get your ip addr from your computer.
