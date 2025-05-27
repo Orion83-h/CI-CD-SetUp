@@ -53,6 +53,9 @@ resource "aws_instance" "virtual_server" {
       # Install Gitleaks
       "sudo apt install gitleaks -y",
 
+      # Install jq
+      "sudo apt-get install jq -y",
+
       # Install AWS CLI
       # Ref: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
       "sudo apt install unzip -y",
